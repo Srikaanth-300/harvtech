@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <include file="$(find navigation)/launch/world_coordinates.launch" />
+  
+  <include file="$(find navigation)/launch/move_base_planner.launch" />
+  
+  <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find navigation)/config/rviz.rviz"/>
+  
+  <node pkg="global_planner_f2c" type="bash_delay.sh" name="bash_start" output="screen" launch-prefix="bash"/>
+
+</launch>

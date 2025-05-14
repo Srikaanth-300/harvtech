@@ -1,0 +1,104 @@
+navsat_transform_node:
+  magnetic_declination_radians: 0
+
+  yaw_offset: 0
+
+  delay: 1.0
+
+  use_odometry_yaw: false
+  
+  zero_altitude: true
+
+  frequency: 30
+
+  cartesian_frame_id: utm
+
+  broadcast_cartesian_transform: true
+
+  broadcast_cartesian_transform_as_parent_frame: false
+
+  publish_filtered_gps: false
+
+  wait_for_datum: true
+
+  datum: [13.011422242, 80.239555785, 1.57]
+  
+  map_frame: map
+  odom_frame: odom
+  base_link_frame: base_footprint
+  world_frame: map
+
+ekf:
+  frequency: 30
+  map_frame: map
+  odom_frame: odom
+  base_link_frame: base_footprint
+  world_frame: map
+  publish_tf: true
+  two_d_mode: true
+  transform_time_offset: 0.05
+  odom0: odometry/gps
+  odom0_config: [true,  true,  false,
+                 false, false, false,
+                 false, false, false,
+                 false, false, false,
+                 false, false, false]
+  odom0_queue_size: 10
+  odom0_nodelay: false
+  odom0_differential: false
+  odom0_relative: false
+
+  #twist0: ublox/fix_velocity
+  #twist0_config: [false, false, false,
+  #                false, false, false,
+  #               true,  true,  true,
+  #                false, false, false,
+  #                false, false, false]
+
+  imu0: imu
+  imu0_config: [false, false, false,
+                false, false,  true,
+                false, false, false,
+                false,  false,  false,
+                false,  false,  false]
+  imu0_nodelay: false
+  imu0_differential: false
+  imu0_relative: false
+  imu0_queue_size: 10
+  imu0_remove_gravitational_acceleration: false
+
+  use_control: false
+
+  #debug: true
+  #debug_out_file: /home/srikaanth/rover_ws/src/bag_files/ekf.txt
+
+  #process_noise_covariance: [1.0,  0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+   #                          0,    1.0,  0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+    #                         0,    0,    1e-3, 0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+     #                        0,    0,    0,    0.3,  0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+      #                       0,    0,    0,    0,    0.3,  0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+       #                      0,    0,    0,    0,    0,    0.01, 0,     0,     0,    0,    0,    0,    0,    0,    0,
+        #                     0,    0,    0,    0,    0,    0,    0.5,   0,     0,    0,    0,    0,    0,    0,    0,
+         #                    0,    0,    0,    0,    0,    0,    0,     0.5,   0,    0,    0,    0,    0,    0,    0,
+          #                   0,    0,    0,    0,    0,    0,    0,     0,     0.1,  0,    0,    0,    0,    0,    0,
+           #                  0,    0,    0,    0,    0,    0,    0,     0,     0,    0.3,  0,    0,    0,    0,    0,
+            #                 0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0.3,  0,    0,    0,    0,
+             #                0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0.3,  0,    0,    0,
+              #               0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0.3,  0,    0,
+               #              0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0.3,  0,
+                #             0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0.3]
+  #initial_estimate_covariance: [1.0,  0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+   #                             0,    1.0,  0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+    #                            0,    0,    1e-9, 0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+     #                           0,    0,    0,    1.0,  0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+      #                          0,    0,    0,    0,    1.0,  0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+       #                         0,    0,    0,    0,    0,    1e-9, 0,    0,    0,    0,     0,     0,     0,    0,    0,
+        #                        0,    0,    0,    0,    0,    0,    1.0,  0,    0,    0,     0,     0,     0,    0,    0,
+         #                       0,    0,    0,    0,    0,    0,    0,    1.0,  0,    0,     0,     0,     0,    0,    0,
+          #                      0,    0,    0,    0,    0,    0,    0,    0,    1.0,  0,     0,     0,     0,    0,    0,
+           #                     0,    0,    0,    0,    0,    0,    0,    0,    0,    1.0,   0,     0,     0,    0,    0,
+            #                    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     1.0,   0,     0,    0,    0,
+             #                   0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     1.0,   0,    0,    0,
+              #                  0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     1.0,  0,    0,
+               #                 0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    1.0,  0,
+                #                0,    0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    1.0]

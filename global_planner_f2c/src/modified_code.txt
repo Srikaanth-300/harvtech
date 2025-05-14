@@ -1,0 +1,65 @@
+''' This is a test to publish points as a topic after reading the CSV file ''' 
+
+
+
+#include <ros/ros.h>
+#include <costmap_2d/costmap_2d_ros.h>
+#include <costmap_2d/costmap_2d.h>
+#include <nav_core/base_global_planner.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <angles/angles.h>
+#include <base_local_planner/world_model.h>
+#include <base_local_planner/costmap_model.h>
+#include <global_planner_f2c/f2c_planner.h>
+#include <nav_msgs/Path.h>
+#include <fstream>
+#include <sstream>
+#include <pluginlib/class_list_macros.h>
+
+using std::string;
+
+namespace F2C_planner {
+
+ GlobalPlanner::GlobalPlanner() {}
+ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
+    ros::NodeHandle nh;
+    global_plan_pub = nh.advertise<nav_msgs::Path>("global_plan", 10);
+    ROS_INFO("F2C_planner plugin has been initiated.");
+
+    std::string csv_file_path = "/home/srikaanth/bison_ws/src/Fields2Cover/tutorials/turn_4.csv";
+    std::ifstream file(csv_file_path);
+    std::string line;
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string value;
+        double x, y, z = 0.0;
+        if (std::getline(ss, value, ' ')) x = std::stod(value);
+        if (std::getline(ss, value, ' ')) y = std::stod(value);
+        if (std::getline(ss, value, ' ')) z = std::stod(value); 
+        geometry_msgs::PoseStamped pose;
+        pose.header.stamp = ros::Time::now();
+        pose.header.frame_id = "map";
+        pose.pose.position.x = x;
+        pose.pose.position.y = y;
+        pose.pose.position.z = z;
+        pose.pose.orientation.w = 1.0;
+        global_plan.push_back(pose);
+    }
+    file.close();
+    nav_msgs::Path path_msg;
+    path_msg.header.stamp = ros::Time::now();
+    path_msg.header.frame_id = "map";
+    path_msg.poses = global_plan;
+    
+    global_plan_pub.publish(path_msg);
+
+    ROS_INFO("Number of waypoints in the plan: %d", global_plan.size());
+
+ }
+ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan){
+
+    return true;
+    }
+}
+
+PLUGINLIB_EXPORT_CLASS(F2C_planner::GlobalPlanner, nav_core::BaseGlobalPlanner)

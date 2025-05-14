@@ -1,0 +1,36 @@
+# These were tested for regulated_pure_pursuit package but had issues in the source code (related to orientation). 
+
+RegulatedPurePursuitController:
+  
+  odom_topic: odometry/filtered
+  
+  lookahead_time: 1.5
+  lookahead_dist: 1.0
+  min_lookahead_dist: 0.5
+  max_lookahead_dist: 2.5
+  use_velocity_scaled_lookahead_dist: false
+  
+  use_rotate_to_heading: true
+  rotate_to_heading_min_angle: 0.785
+  rotate_to_heading_angular_vel: 0.5
+  max_angular_accel: 1.0
+  
+  allow_reversing: false
+  
+  desired_linear_vel: 0.75
+  max_angular_vel: 1.0
+  min_approach_linear_velocity: 0.15
+  
+  use_regulated_linear_velocity_scaling: false
+  regulated_linear_scaling_min_radius: 1.0
+  regulated_linear_scaling_min_speed: 0.2
+  
+  use_cost_regulated_linear_velocity_scaling: false
+  inflation_cost_scaling_factor: 1.0
+  cost_scaling_dist: 0.5
+  cost_scaling_gain: 0.75
+  max_allowed_time_to_collision_up_to_carrot: 1.0
+  
+  goal_dist_tol: 0.25
+  
+  control_frequency: 20.0

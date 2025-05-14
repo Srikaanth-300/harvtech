@@ -1,0 +1,159 @@
+''' This is to test the behavior of A* planner '''
+
+
+
+#include <ros/ros.h>
+#include <costmap_2d/costmap_2d_ros.h>
+#include <costmap_2d/costmap_2d.h>
+#include <nav_core/base_global_planner.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <angles/angles.h>
+#include <base_local_planner/world_model.h>
+#include <base_local_planner/costmap_model.h>
+#include <global_planner_f2c/f2c_planner.h>
+#include <nav_msgs/Path.h>
+#include <fstream>
+#include <sstream>
+#include <pluginlib/class_list_macros.h>
+
+using std::string;
+
+namespace F2C_planner {
+
+ GlobalPlanner::GlobalPlanner() {}
+ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
+    ros::NodeHandle nh;
+    global_plan_pub = nh.advertise<nav_msgs::Path>("global_plan", 10);
+    costmap_ = costmap_ros->getCostmap(); // Get costmap
+    ROS_INFO("F2C_planner plugin has been initiated.");
+
+ }
+ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan){
+
+    std::string csv_file_path = "/home/srikaanth/bison_ws/src/Fields2Cover/tutorials/turn_4.csv";
+    std::ifstream file(csv_file_path);
+    std::string line;
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string value;
+        double x, y, z = 0.0;
+        if (std::getline(ss, value, ' ')) x = std::stod(value);
+        if (std::getline(ss, value, ' ')) y = std::stod(value);
+        if (std::getline(ss, value, ' ')) z = std::stod(value); 
+        geometry_msgs::PoseStamped pose;
+        pose.header.stamp = ros::Time::now();
+        pose.header.frame_id = "map";
+        pose.pose.position.x = x;
+        pose.pose.position.y = y;
+        pose.pose.position.z = z;
+        pose.pose.orientation.w = 1.0;
+        plan.push_back(pose);
+        ROS_INFO("x: %f ,y: %f, z: %f", x, y, z);
+    }
+    file.close();
+    nav_msgs::Path path_msg;
+    path_msg.header.stamp = ros::Time::now();
+    path_msg.header.frame_id = "map";
+    path_msg.poses = plan;
+    
+    global_plan_pub.publish(path_msg);
+
+    ROS_INFO("Number of waypoints in the plan: %d", plan.size());
+    
+    return true;
+    }
+ std::vector<GlobalPlanner::Node> GlobalPlanner::runAStar(double start_x, double start_y, double goal_x, double goal_y) {
+    // Open and closed lists
+    std::vector<Node> open_list;
+    std::vector<Node> closed_list;
+
+    // Initialize the start node
+    Node start_node = {start_x, start_y, 0.0, getHeuristic(start_x, start_y, goal_x, goal_y), nullptr};
+    open_list.push_back(start_node);
+
+    // Direction vectors for 4-way movement (up, down, left, right)
+    std::vector<std::pair<int, int>> directions = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
+
+    while (!open_list.empty()) {
+        // Find the node with the lowest f = g + h
+        auto current_node_iter = std::min_element(open_list.begin(), open_list.end(), 
+            [](const Node& a, const Node& b) { return (a.cost + a.heuristic) < (b.cost + b.heuristic); });
+
+        Node current_node = *current_node_iter;
+        open_list.erase(current_node_iter);
+
+        // If we've reached the goal, reconstruct the path
+        if (fabs(current_node.x - goal_x) < 0.1 && fabs(current_node.y - goal_y) < 0.1) {
+            std::vector<Node> path;
+            Node* node = &current_node;
+            while (node != nullptr) {
+                path.push_back(*node);
+                node = node->parent;
+            }
+            std::reverse(path.begin(), path.end());
+            return path;  // Return the path from start to goal
+        }
+
+        // Move the current node to the closed list
+        closed_list.push_back(current_node);
+
+        // Check all neighbors (up, down, left, right)
+        for (const auto& dir : directions) {
+            double neighbor_x = current_node.x + dir.first;
+            double neighbor_y = current_node.y + dir.second;
+
+            // Skip invalid neighbors (outside bounds or occupied)
+            if (!isValid(neighbor_x, neighbor_y)) {
+                continue;
+            }
+
+            // Check if the neighbor is in the closed list
+            bool in_closed = std::any_of(closed_list.begin(), closed_list.end(), 
+                [neighbor_x, neighbor_y](const Node& n) { return n.x == neighbor_x && n.y == neighbor_y; });
+            if (in_closed) {
+                continue;
+            }
+
+            // Check if the neighbor is already in the open list
+            auto in_open = std::find_if(open_list.begin(), open_list.end(), 
+                [neighbor_x, neighbor_y](const Node& n) { return n.x == neighbor_x && n.y == neighbor_y; });
+
+            if (in_open == open_list.end()) {
+                // Calculate the new g(n) and h(n)
+                double g_cost = current_node.cost + 1.0;  // Assuming each move has a cost of 1
+                double h_cost = getHeuristic(neighbor_x, neighbor_y, goal_x, goal_y);
+                
+                // Create the neighbor node and add it to the open list
+                Node neighbor = {neighbor_x, neighbor_y, g_cost, h_cost, &closed_list.back()};
+                open_list.push_back(neighbor);
+            }
+        }
+    }
+
+    return {};  // Return an empty path if no path is found
+ }
+
+ double GlobalPlanner::getHeuristic(double x1, double y1, double x2, double y2) {
+    // Using Euclidean distance as the heuristic
+    return std::sqrt(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2));
+ }
+
+ bool GlobalPlanner::isValid(double x, double y) {
+    // Check if the coordinates are within bounds and not occupied in the costmap
+    if (x < 0 || y < 0 || x >= costmap_->getSizeInMetersX() || y >= costmap_->getSizeInMetersY()) {
+        return false;  // Outside the costmap bounds
+    }
+
+    unsigned int mx, my;
+    if (!costmap_->worldToMap(x, y, mx, my)) {
+        return false;  // Invalid conversion from world to map coordinates
+    }
+
+    // Check if the cell is occupied (e.g., by obstacles)
+    unsigned char cost = costmap_->getCost(mx, my);
+    return cost != costmap_2d::LETHAL_OBSTACLE;
+ }
+
+}
+
+PLUGINLIB_EXPORT_CLASS(F2C_planner::GlobalPlanner, nav_core::BaseGlobalPlanner)

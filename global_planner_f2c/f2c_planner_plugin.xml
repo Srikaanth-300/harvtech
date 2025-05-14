@@ -1,0 +1,5 @@
+<library path="lib/libf2c_global_planner">
+  <class name="F2C_planner/GlobalPlanner" type="F2C_planner::GlobalPlanner" base_class_type="nav_core::BaseGlobalPlanner">
+    <description>Global planner plugin that loads path from a CSV file.</description>
+  </class>
+</library>
